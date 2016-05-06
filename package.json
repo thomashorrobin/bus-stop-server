@@ -1,0 +1,13 @@
+{
+  "name": "bus-stop-server",
+  "version": "0.0.0",
+  "description": "A nodejs web server for storing bus stop data in wellington",
+  "main": "server.js",
+  "author": {
+    "name": "Thomas Horrobin",
+    "email": "thomasroberthorrobin@gmail.com"
+  },
+  "dependencies": {
+    "underscore": "^1.8.3"
+  }
+}
