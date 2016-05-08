@@ -1,42 +1,13 @@
 ﻿var http = require('http');
 var https = require('https');
+var db = require('./db');
+var cashe = require('./db-cashe');
 var logging = require('./console-config');
 var hard_coded_data = require('./busstops-hardcoded');
 logging.add_local_logging();
-var MongoClient = require('mongodb').MongoClient;
-var assert = require('assert');
 var port = process.env.port || 1337;
-var busStopList = [];
-var stopsToAddToDb = [];
 const StringDecoder = require('string_decoder').StringDecoder;
 const decoder = new StringDecoder('utf8');
-var url = 'mongodb://localhost:27017/test';
-MongoClient.connect(url, function(err, db) {
-  assert.equal(null, err);
-  var collection = db.collection('stops');
-  collection.find({}).toArray(function (err, docs) {
-	  for (var index = 0; index < docs.length; index++) {
-		  var doc = docs[index];
-  	  	  busStopList.push(doc);
-	  }
-		console.log("finished adding stops to web server from mongodb");
-      db.close();
-  });
-});
-function addStopToDb(stop) {
-	MongoClient.connect(url, function(err, db) {
-	assert.equal(null, err);
-	db.collection('stops').insertOne(stop);
-	db.close();
-	});
-}
-function addStopsToDb(stops) {
-	MongoClient.connect(url, function(err, db) {
-	assert.equal(null, err);
-	db.collection('stops').insertMany(stops);
-	db.close();
-	});
-}
 function getBusStop(busStopId) {
 	if (busStopExists(busStopId)) {
 		console.log("Bus stop:" + busStopId + " already exists localally. The http request will not be sent as to save on 429s");
@@ -49,22 +20,14 @@ function getBusStop(busStopId) {
 		res.on('data', function (d) {
 			if (res.statusCode == 200 && !busStopExists(busStopId)) {
 				var stop = JSON.parse(d.toString());
-				busStopList.push(stop);
-				stopsToAddToDb.push(stop);
+				db.add(stop);
 			}
 		});
 	});
 	req.end();
 };
 function busStopExists(busStopId) {
-	var exists = false;
-	for (var i = 0; i < busStopList.length; i++) {
-		var stop = busStopList[i];
-		if (stop.Sms == busStopId) {
-			exists = true;
-		}
-	}
-	return exists;
+	return cashe.exists(busStopId);
 };
 function getBusRoute(routeId) {
 	var url = 'https://www.metlink.org.nz/timetables/bus/' + routeId + '/inbound/mapdatajson';
@@ -102,6 +65,7 @@ function getAllBusRoutes() {
 }
 function searchBySubString(substr) {
 	var results = [];
+	var busStopList = db.list();
 	for (var index = 0; index < busStopList.length; index++) {
 		var stop = busStopList[index];
 		if (stop.Name.includes(substr)) {
@@ -115,7 +79,9 @@ http.createServer(function (req, res) {
 	console.log('Server recivied request: ' + req.url);
 	var pathParams = req.url.toString().split('/');
 	if (pathParams[1] == 'list') { // http://localhost:1337/list
-		res.end(JSON.stringify(busStopList));
+		db.list(function (data) {
+			res.end(JSON.stringify(data));
+		});
 	} else if(pathParams[1] == 'getstop') { // http://localhost:1337/getstop/5500
 		var busStopId = pathParams[2];
 		if (busStopExists(busStopId)) {
@@ -136,11 +102,9 @@ http.createServer(function (req, res) {
 	} else if(pathParams[1] == 'grep') { // http://localhost:1337/grep/lampton
 		res.end(JSON.stringify(searchBySubString(pathParams[2])));
 	} else if(pathParams[1] == 'count') { // http://localhost:1337/count
-		res.end(busStopList.length.toString());
-	} else if(pathParams[1] == 'addstopstomongodb') { // http://localhost:1337/addstopstomongodb
-		addStopsToDb(stopsToAddToDb);
-		stopsToAddToDb = [];
-		res.end("attempt to add stops to mongodb");
+		db.count(function (c) {
+			res.end(c.toString());
+		});
 	} else {
 		res.end(JSON.stringify(pathParams));
 	}
