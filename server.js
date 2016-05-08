@@ -1,12 +1,43 @@
-var http = require('http');
+﻿var http = require('http');
 var https = require('https');
 var _ = require('underscore');
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
 var port = process.env.port || 1337;
 var busStopList = [];
+var stopsToAddToDb = [];
 const StringDecoder = require('string_decoder').StringDecoder;
 const decoder = new StringDecoder('utf8');
+var url = 'mongodb://localhost:27017/test';
+MongoClient.connect(url, function(err, db) {
+  assert.equal(null, err);
+  var collection = db.collection('stops');
+  collection.find({}).toArray(function (err, docs) {
+	  for (var index = 0; index < docs.length; index++) {
+		  var doc = docs[index];
+  	  	  busStopList.push(doc);
+	  }
+		console.log("finished adding stops to web server from mongodb");
+      db.close();
+  });
+});
+function addStopToDb(stop) {
+	MongoClient.connect(url, function(err, db) {
+	assert.equal(null, err);
+	db.collection('stops').insertOne(stop);
+	db.close();
+	});
+}
+function addStopsToDb(stops) {
+	MongoClient.connect(url, function(err, db) {
+	assert.equal(null, err);
+	db.collection('stops').insertMany(stops);
+	db.close();
+	});
+}
 function getBusStop(busStopId) {
 	if (busStopExists(busStopId)) {
+		console.log("Bus stop:" + busStopId + " already exists localally. The http request will not be sent as to save on 429s");
 		return;
 	}
 	var url = 'https://www.metlink.org.nz/api/v1/Stop/' + busStopId;
@@ -15,7 +46,9 @@ function getBusStop(busStopId) {
 		console.log(res.statusCode + " responce from " + url);
 		res.on('data', function (d) {
 			if (res.statusCode == 200 && !busStopExists(busStopId)) {
-				busStopList.push(JSON.parse(d.toString()));
+				var stop = JSON.parse(d.toString());
+				busStopList.push(stop);
+				stopsToAddToDb.push(stop);
 			}
 		});
 	});
@@ -199,6 +232,12 @@ http.createServer(function (req, res) {
 		res.end("Request has been sent to scan all routes");
 	} else if(pathParams[1] == 'grep') { // http://localhost:1337/grep/lampton
 		res.end(JSON.stringify(searchBySubString(pathParams[2])));
+	} else if(pathParams[1] == 'count') { // http://localhost:1337/count
+		res.end(busStopList.length.toString());
+	} else if(pathParams[1] == 'addstopstomongodb') { // http://localhost:1337/addstopstomongodb
+		addStopsToDb(stopsToAddToDb);
+		stopsToAddToDb = [];
+		res.end("attempt to add stops to mongodb");
 	} else {
 		res.end(JSON.stringify(pathParams));
 	}
