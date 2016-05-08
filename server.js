@@ -5,17 +5,6 @@ var metlink = require('./metlink');
 var logging = require('./console-config');
 logging.add_local_logging();
 var port = process.env.port || 1337;
-function searchBySubString(substr) {
-	var results = [];
-	var busStopList = db.list();
-	for (var index = 0; index < busStopList.length; index++) {
-		var stop = busStopList[index];
-		if (stop.Name.includes(substr)) {
-			results.push(stop);
-		}
-	}
-	return results;
-}
 http.createServer(function (req, res) {
 	res.writeHead(200, { 'Content-Type': 'application/json' });
 	console.log('Server recivied request: ' + req.url);
@@ -42,7 +31,7 @@ http.createServer(function (req, res) {
 		metlink.addAllBusRoutes();
 		res.end("Request has been sent to scan all routes");
 	} else if(pathParams[1] == 'grep') { // http://localhost:1337/grep/lampton
-		res.end(JSON.stringify(searchBySubString(pathParams[2])));
+		res.end(JSON.stringify(cashe.searchCasheByName(pathParams[2])));
 	} else if(pathParams[1] == 'count') { // http://localhost:1337/count
 		db.count(function (c) {
 			res.end(c.toString());

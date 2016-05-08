@@ -3,7 +3,8 @@ var busStopCashedList = [];
 
 module.exports = {
     exists: exists,
-    refresh: refresh
+    refresh: refresh,
+    searchCasheByName: grepCashe
 }
 
 function exists(stopId) {
@@ -25,4 +26,15 @@ function refresh() {
     db.list(function (data) {
         busStopCashedList = data;
     });
+}
+
+function grepCashe(substr) {
+	var results = [];
+	for (var index = 0; index < busStopCashedList.length; index++) {
+		var stop = busStopCashedList[index];
+		if (stop.Name.includes(substr)) {
+			results.push(stop);
+		}
+	}
+	return results;
 }
