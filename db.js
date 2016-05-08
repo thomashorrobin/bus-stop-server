@@ -1,6 +1,6 @@
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-var url = 'mongodb://localhost:27017/test';
+var url = 'mongodb://localhost:27017/busstop';
 var appdb;
 
 MongoClient.connect(url, function(err, db) {
