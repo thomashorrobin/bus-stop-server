@@ -7,8 +7,11 @@ module.exports = {
     add_local_logging: logLocally
 }
 function logLocally() {
-    console.log = function(d) { //
+    console.log = function(d) {
         log_file.write(util.format(d) + '\n');
         log_stdout.write(util.format(d) + '\n');
+    };
+    console.info = function(d) {
+        log_file.write(util.format(d) + '\n');
     };
 }
