@@ -5,9 +5,6 @@ var metlink = require('./metlink');
 var logging = require('./console-config');
 logging.add_local_logging();
 var port = process.env.port || 1337;
-function busStopExists(busStopId) {
-	return cashe.exists(busStopId);
-};
 function searchBySubString(substr) {
 	var results = [];
 	var busStopList = db.list();
@@ -29,14 +26,14 @@ http.createServer(function (req, res) {
 		});
 	} else if(pathParams[1] == 'getstop') { // http://localhost:1337/getstop/5500
 		var busStopId = pathParams[2];
-		if (busStopExists(busStopId)) {
+		if (cashe.exists(busStopId)) {
 			res.end("bus stop already exists");
 		} else {
 			metlink.addBusStop(busStopId);
 			res.end("Request sent for stop:" + pathParams[2]);
 		}
 	} else if(pathParams[1] == 'exists') { // http://localhost:1337/exists/5500
-		var exists = busStopExists(pathParams[2]);
+		var exists = cashe.exists(pathParams[2]);
 		res.end(exists.toString());
 	} else if(pathParams[1] == 'getroute') { // http://localhost:1337/getroute/3
 		metlink.addBusRoute(pathParams[2]);
