@@ -1,4 +1,4 @@
-﻿var http = require('http');
+var http = require('http');
 var https = require('https');
 var _ = require('underscore');
 var port = process.env.port || 1337;
@@ -145,16 +145,16 @@ function getAllBusRoutes() {
 	routeIds.push('289');
 	routeIds.push('290');
 	routeIds.push('300');
-	// routeIds.push('N1');
-	// routeIds.push('N2');
-	// routeIds.push('N22');
-	// routeIds.push('N3');
-	// routeIds.push('N4');
-	// routeIds.push('N5');
-	// routeIds.push('N6');
-	// routeIds.push('N66');
-	// routeIds.push('N8');
-	// routeIds.push('N88');
+	routeIds.push('N1');
+	routeIds.push('N2');
+	routeIds.push('N22');
+	routeIds.push('N3');
+	routeIds.push('N4');
+	routeIds.push('N5');
+	routeIds.push('N6');
+	routeIds.push('N66');
+	routeIds.push('N8');
+	routeIds.push('N88');
 	for (var index = 0; index < routeIds.length; index++) {
 		var routeId = routeIds[index];
 		try {
