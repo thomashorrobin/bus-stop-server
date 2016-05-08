@@ -1,5 +1,7 @@
 ﻿var http = require('http');
 var https = require('https');
+var logging = require('./console-config');
+logging.add_local_logging();
 var _ = require('underscore');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
